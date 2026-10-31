@@ -1,0 +1,6 @@
+{
+  "name": "GG.fun - Mini Games & Multiplayer Arcade",
+  "description": "Play Connect 4 with bot & online multiplayer, Chess, Tic-Tac-Toe with real-time leaderboards, Snake, Draw a Perfect Line, Guess the Logo, and interactive Water Physics simulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
