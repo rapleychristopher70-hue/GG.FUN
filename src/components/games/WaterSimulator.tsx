@@ -14,6 +14,8 @@ import {
   Sliders,
   Sparkles,
   Sun,
+  Moon,
+  Power,
   Layers,
   Mountain,
 } from 'lucide-react';
@@ -110,6 +112,15 @@ export const WaterSimulator: React.FC = () => {
   const [sunPos, setSunPos] = useState<{ x: number; y: number }>({ x: 520, y: 70 });
   const sunPosRef = useRef<{ x: number; y: number }>({ x: 520, y: 70 });
   const isDraggingSunRef = useRef<boolean>(false);
+
+  const toggleSun = useCallback(() => {
+    setIsSunOn(prev => {
+      const next = !prev;
+      isSunOnRef.current = next;
+      return next;
+    });
+    sound.playClick();
+  }, []);
 
   const isMouseDownRef = useRef(false);
   const mousePosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -875,6 +886,19 @@ export const WaterSimulator: React.FC = () => {
           ctx.fillStyle = '#0a0f1d';
           ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+          // If Sun is OFF, render calm nocturnal starry sky
+          if (!isSunOnRef.current) {
+            ctx.fillStyle = 'rgba(226, 232, 240, 0.45)';
+            const stars: [number, number][] = [
+              [45, 22], [90, 48], [145, 18], [210, 36], [280, 16], [340, 44],
+              [415, 20], [475, 48], [530, 24], [585, 38], [615, 16],
+              [65, 75], [170, 82], [245, 65], [380, 80], [445, 70], [515, 85]
+            ];
+            for (let s = 0; s < stars.length; s++) {
+              ctx.fillRect(stars[s][0], stars[s][1], 1.5, 1.5);
+            }
+          }
+
           // Render Radiant Sun & Solar Heat Rays (if Sun is active)
           if (isSunOnRef.current) {
             const { x: sx, y: sy } = sunPosRef.current;
@@ -1384,6 +1408,22 @@ export const WaterSimulator: React.FC = () => {
             <span>🍳</span>
             <span>Boiling Oil &amp; Water</span>
           </button>
+
+          {/* Quick Sun Toggle in Top Toolbar */}
+          <div className="flex items-center pl-2 ml-1 border-l border-slate-800">
+            <button
+              onClick={toggleSun}
+              title={isSunOn ? 'Turn off the Sun' : 'Turn on the Sun'}
+              className={`px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1.5 transition-all border shadow-sm ${
+                isSunOn
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30'
+                  : 'bg-slate-900 text-slate-400 border-slate-700 hover:text-white'
+              }`}
+            >
+              {isSunOn ? <Sun className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" /> : <Moon className="w-3.5 h-3.5 text-slate-400" />}
+              <span>Sun: <strong className={isSunOn ? 'text-amber-300 font-bold' : 'text-slate-400'}>{isSunOn ? 'ON' : 'OFF'}</strong></span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1568,26 +1608,48 @@ export const WaterSimulator: React.FC = () => {
           </div>
 
           {/* Optional Sun & Solar Atmosphere Card */}
-          <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-3 text-xs">
+          <div className={`p-4 rounded-xl space-y-3 text-xs border transition-all ${
+            isSunOn ? 'bg-slate-900 border-amber-500/40 shadow-sm shadow-amber-950/20' : 'bg-slate-900 border-slate-800'
+          }`}>
             <div className="font-semibold text-slate-300 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <Sun className="w-4 h-4 text-amber-400" />
-                <span>RADIANT SUN</span>
+                {isSunOn ? <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" /> : <Moon className="w-4 h-4 text-slate-400" />}
+                <span className={isSunOn ? 'text-amber-300 font-bold' : 'text-slate-300'}>RADIANT SUN</span>
               </span>
+              {/* Toggle switch track */}
               <button
-                onClick={() => setIsSunOn(s => !s)}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono transition-colors border ${
-                  isSunOn
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                    : 'bg-slate-950 text-slate-500 border-slate-800'
+                type="button"
+                onClick={toggleSun}
+                className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isSunOn ? 'bg-amber-500' : 'bg-slate-700'
                 }`}
+                title={isSunOn ? 'Turn off the Sun' : 'Turn on the Sun'}
+                aria-label="Toggle Radiant Sun"
               >
-                {isSunOn ? 'ACTIVE' : 'OFF'}
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    isSunOn ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
               </button>
             </div>
 
-            {isSunOn && (
-              <div className="space-y-2 pt-1 border-t border-slate-800/80">
+            {/* Big 1-Click Action Button */}
+            <button
+              onClick={toggleSun}
+              type="button"
+              className={`w-full py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all border ${
+                isSunOn
+                  ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border-amber-500/40 shadow-sm'
+                  : 'bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white border-slate-800'
+              }`}
+            >
+              <Power className={`w-3.5 h-3.5 ${isSunOn ? 'text-amber-400' : 'text-slate-500'}`} />
+              <span>{isSunOn ? 'Turn Sun OFF' : 'Turn Sun ON'}</span>
+            </button>
+
+            {isSunOn ? (
+              <div className="space-y-2 pt-1 border-t border-slate-800">
                 <div className="flex justify-between text-slate-400">
                   <span>Solar Intensity:</span>
                   <span className="font-mono text-amber-300">{sunIntensity.toFixed(1)}x</span>
@@ -1609,6 +1671,11 @@ export const WaterSimulator: React.FC = () => {
                 <div className="p-2 rounded bg-slate-950/80 border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
                   ☀️ <span className="text-amber-200">Interactive:</span> Drag the sun across the canvas sky to focus solar heat and melt icebergs or create steam clouds!
                 </div>
+              </div>
+            ) : (
+              <div className="p-2 rounded bg-slate-950/80 border border-slate-800 text-[10px] text-slate-400 flex items-center gap-2">
+                <Moon className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>Sun is <strong>OFF</strong>. Thermal radiation is disabled (nighttime physics).</span>
               </div>
             )}
           </div>
@@ -1763,13 +1830,39 @@ export const WaterSimulator: React.FC = () => {
               )}
             </div>
 
-            {/* In-Canvas Sun Status Badge */}
-            {isSunOn && (
-              <div className="absolute top-4 right-4 pointer-events-none flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-950/80 border border-amber-600/40 text-[11px] font-mono text-amber-300 shadow">
-                <Sun className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-                <span>Solar Heat ({sunIntensity.toFixed(1)}x)</span>
-              </div>
-            )}
+            {/* In-Canvas Sun Status & 1-Click Instant Toggle Button */}
+            <button
+              onClick={toggleSun}
+              type="button"
+              className={`absolute top-3.5 right-3.5 z-20 pointer-events-auto cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-semibold shadow-lg backdrop-blur-md transition-all select-none border ${
+                isSunOn
+                  ? 'bg-amber-950/90 hover:bg-amber-900 border-amber-500/50 text-amber-200 hover:scale-105 active:scale-95 shadow-amber-950/40'
+                  : 'bg-slate-900/90 hover:bg-slate-800 border-slate-700 text-slate-300 hover:scale-105 active:scale-95 shadow-black/40'
+              }`}
+              title={isSunOn ? 'Click to turn Sun OFF' : 'Click to turn Sun ON'}
+            >
+              {isSunOn ? (
+                <>
+                  <Sun className="w-3.5 h-3.5 text-amber-400 animate-spin-slow shrink-0" />
+                  <span className="flex items-center gap-1.5">
+                    <span>Sun: <strong className="text-amber-300">ON</strong> ({sunIntensity.toFixed(1)}x)</span>
+                    <span className="text-[9px] uppercase tracking-wider text-amber-400/90 bg-amber-900/70 px-1.5 py-0.5 rounded border border-amber-500/40">
+                      Click to Turn OFF
+                    </span>
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3.5 h-3.5 text-cyan-300 shrink-0" />
+                  <span className="flex items-center gap-1.5">
+                    <span>Sun: <strong className="text-slate-400">OFF</strong></span>
+                    <span className="text-[9px] uppercase tracking-wider text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-600">
+                      Click to Turn ON
+                    </span>
+                  </span>
+                </>
+              )}
+            </button>
 
             {/* Temperature & Substance Legend Overlay */}
             <div className="absolute bottom-4 right-4 pointer-events-none hidden sm:flex items-center gap-2 text-[10px] font-mono px-2.5 py-1 rounded bg-slate-950/85 border border-slate-800 text-slate-400">
